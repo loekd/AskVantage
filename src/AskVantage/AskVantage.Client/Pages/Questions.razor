@@ -1,0 +1,122 @@
+﻿@page "/questions"
+@using AskVantage.Client.Models
+@using AskVantage.Client.Services
+@inject IImageService ImageService
+@rendermode InteractiveWebAssembly
+
+@inject ISnackbar Snackbar
+@inject ILogger<Home> Logger
+
+<PageTitle>Questions</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <h2>Existing questions</h2>
+
+    @if (AllQuestions.Count > 0)
+    {
+        @foreach (var questionResult in AllQuestions)
+        {
+            <MudPaper Elevation="4" Class="pa-4 mb-4">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <MudText Typo="Typo.h6">@questionResult.TextTitle</MudText>
+                    <MudButton Color="Color.Secondary" OnClick="() => DeleteQuestion(questionResult)" StartIcon="@Icons.Material.Filled.Delete" Class="mb-2" />
+                </div>
+                <MudDivider />
+                <MudText Typo="Typo.body1" Class="mb-2">
+                    <span @onclick="() => ToggleTextVisibility(questionResult.TextTitle, questionResult.OriginalText)" style="cursor: pointer;">
+                        @if (IsTextCollapsed(questionResult.TextTitle, questionResult.OriginalText))
+                        {
+                            @string.Format("{0}...", questionResult.OriginalText.Substring(0, Math.Min(50, questionResult.OriginalText.Length)))
+                        }
+                        else
+                        {
+                            @questionResult.OriginalText
+                        }
+                    </span>
+                </MudText>
+                <MudDivider />
+                <MudTable Items="@questionResult.QuestionsAndAnswers" Hover="true">
+                    <HeaderContent>
+                        <MudTh>Question</MudTh>
+                        <MudTh>Answer</MudTh>
+                        <MudTh>Reference</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.Question</MudTd>
+                        <MudTd>@context.Answer</MudTd>
+                        <MudTd>@context.Reference</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </MudPaper>
+        }
+    }
+    else
+    {
+        <MudText Typo="Typo.h6" Align="Align.Center" Class="mt-4">No questions available.</MudText>
+    }
+</MudContainer>
+
+@code {
+    private List<QuestionGenerationResult> AllQuestions { get; set; } = new List<QuestionGenerationResult>();
+    private HashSet<int> CollapsedTextKeys { get; set; } = new HashSet<int>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AllQuestions.Count > 0)
+            AllQuestions.Clear();
+
+        try
+        {
+            var questions = await ImageService.GetQuestions();
+            AllQuestions.AddRange(questions);
+            foreach (var t in AllQuestions)
+            {
+                CollapsedTextKeys.Add(GenerateKey(t.TextTitle));
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load questions");
+            Snackbar.Add("Failed to load questions", Severity.Error);
+        }
+    }
+
+    private async Task DeleteQuestion(QuestionGenerationResult question)
+    {
+        try
+        {
+            await ImageService.DeleteQuestion(question);
+            AllQuestions.Remove(question);
+            Snackbar.Add("Question deleted", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to delete question");
+            Snackbar.Add("Failed to delete question", Severity.Error);
+        }
+    }
+
+    private void ToggleTextVisibility(string textTitle, string originalText)
+    {
+        var key = GenerateKey(textTitle);
+        if (CollapsedTextKeys.Contains(key))
+        {
+            CollapsedTextKeys.Remove(key);
+        }
+        else
+        {
+            CollapsedTextKeys.Add(key);
+        }
+    }
+
+    private bool IsTextCollapsed(string textTitle, string originalText)
+    {
+        var key = GenerateKey(textTitle);
+        return CollapsedTextKeys.Contains(key);
+    }
+
+    private int GenerateKey(string textTitle)
+    {
+        return textTitle.GetHashCode();
+    }
+}

@@ -1,0 +1,204 @@
+﻿@page "/"
+@using AskVantage.Client.Models
+@using AskVantage.Client.Services
+@inject IImageService ImageService
+@rendermode InteractiveWebAssembly
+
+@inject ISnackbar Snackbar
+@inject ILogger<Home> Logger
+
+<PageTitle>Home</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudPaper Elevation="4" Class="pa-4 mb-4">
+        <h2>Step 1: Upload a picture</h2>
+
+        <div style="height: 200px; width: 200px; margin-top: 16px; display: flex; align-items: center; justify-content: center; border: 1px dotted #ccc;">
+            @if (!string.IsNullOrEmpty(ThumbnailBase64))
+            {
+                <MudImage Src="@ThumbnailBase64" Alt="Uploaded Image" Width="200" Height="200" />
+            }
+            else
+            {
+                <MudIcon Icon="@Icons.Material.Filled.PhotoCamera" Size="Size.Large" />
+            }
+        </div>
+
+        <MudFileUpload T="IBrowserFile" FilesChanged="UploadFile" Accept=".jpg" Disabled="@IsAnalyzing" Required="true">
+            <ActivatorContent>
+                <MudButton Color="Color.Info" StartIcon="@Icons.Material.Filled.PhotoCamera">
+                    Upload picture
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+
+        <MudButton Color="Color.Primary" StartIcon="@Icons.Material.Filled.Recycling" OnClick="Reset">
+            Clear
+        </MudButton>
+    </MudPaper>
+
+    <MudPaper Elevation="4" Class="pa-4 mb-4">
+        <h2>Step 2: Generate questions</h2>
+        <MudTextField Placeholder="Add a title" @bind-Value="@TextTitle" FullWidth="true" Class="mb-2"></MudTextField>
+        <hr/>
+        <MudTextField Lines="10" Placeholder="Upload image or type text" @bind-Value="@RecognizedText" FullWidth="true" Class="mb-2"></MudTextField>
+        <MudButton OnClick="GenerateQuestions" Disabled="@IsGenerating" Color="Color.Primary">
+            Generate Questions
+        </MudButton>
+    </MudPaper>
+
+    @if (Questions != null && Questions.Any())
+    {
+        <MudPaper Elevation="4" Class="pa-4">
+            <h2>Step 3: Take the quiz</h2>
+            <MudTable Items="@Questions">
+                <HeaderContent>
+                    <MudTh>Question</MudTh>
+                    <MudTh>Answer</MudTh>
+                    <MudTh>Reference</MudTh>
+                    <MudTh>Action</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.QuestionText</MudTd>
+                    <MudTd>@(context.ShowAnswer ? context.AnswerText : "******")</MudTd>
+                    <MudTd>@(context.ShowAnswer ? context.Reference : "")</MudTd>
+                    <MudTd>
+                        <MudButton @onclick="() => ToggleAnswerVisibility(context)" Color="Color.Secondary">
+                            Show/Hide Answer
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private string? RecognizedText { get; set; }
+    private const int MaxFileSize = 10 * 1024 * 1024;
+    private List<Question>? Questions { get; set; }
+    private string? ThumbnailBase64 { get; set; }
+    private string? TextTitle { get; set; }
+
+    private bool IsAnalyzing { get; set; }
+    private bool IsGenerating { get; set; }
+
+    private async Task UploadFile(IBrowserFile e)
+    {
+        if (e.ContentType != "image/jpeg" || e.Size > MaxFileSize)
+        {
+            Snackbar.Add("Please select a JPEG image of less than 10MB with a single column of text.", Severity.Info);
+            return;
+        }
+        Reset();
+
+        try
+        {
+            IsAnalyzing = true;
+            byte[] originalBuffer = await GetFileBytes(e);
+            byte[] thumbnailBuffer = await GetFileBytes(e, 200, 200);
+
+            ThumbnailBase64 = $"data:image/jpeg;base64,{Convert.ToBase64String(thumbnailBuffer)}";
+            TextTitle = e.Name;
+
+            var imageRequest = new Image
+            {
+                Id = Guid.NewGuid(),
+                Name = e.Name,
+                Content = originalBuffer
+            };
+
+            Snackbar.Add("Uploading and analyzing image. Please wait.", Severity.Info);
+            var result = await ImageService.AnalyzeImage(imageRequest);
+            RecognizedText = result.Text;
+            Snackbar.Add("Analysis complete.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to perform OCR");
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            IsAnalyzing = false;
+        }
+    }
+
+    private async Task<byte[]> GetFileBytes(IBrowserFile file, int? maxWidth = null, int? maxHeight = null)
+    {
+        if (maxWidth.HasValue && maxHeight.HasValue)
+        {
+            file = await file.RequestImageFileAsync(file.ContentType, maxWidth.Value, maxHeight.Value);
+        }
+        using var stream = file.OpenReadStream(maxAllowedSize: MaxFileSize);
+        using var memoryStream = new MemoryStream();
+        await stream.CopyToAsync(memoryStream);
+        return memoryStream.ToArray();
+    }
+
+    private async Task GenerateQuestions()
+    {
+        if (string.IsNullOrEmpty(RecognizedText) || string.IsNullOrWhiteSpace(TextTitle))
+        {
+            Snackbar.Add("Please add some text and a title.", Severity.Info);
+            return;
+        }
+
+        try
+        {
+            Snackbar.Add($"Uploading text for {TextTitle} and generating questions. Please wait.", Severity.Info);
+
+            IsGenerating = true;
+            Questions?.Clear();
+
+            var questions = await ImageService.GenerateQuestions(new QuestionGenerationRequest
+            {
+                RequestId = Guid.NewGuid(),
+                Text = RecognizedText,
+                TextTitle = TextTitle
+            });
+
+            if (questions.QuestionsAndAnswers.Any())
+            {
+                Questions = questions.QuestionsAndAnswers.Select(q => new Question
+                {
+                    QuestionText = q.Question,
+                    AnswerText = q.Answer,
+                    Reference = q.Reference,
+                    ShowAnswer = false
+                }).ToList();
+            }
+            Snackbar.Add("Generation complete.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to generate questions");
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            IsGenerating = false;
+        }
+    }
+
+    private void ToggleAnswerVisibility(Question question)
+    {
+        question.ShowAnswer = !question.ShowAnswer;
+    }
+
+    private void Reset()
+    {
+        ThumbnailBase64 = null;
+        TextTitle = null;
+        RecognizedText = null;
+        Questions?.Clear();
+    }
+
+    private class Question
+    {
+        public string? QuestionText { get; set; }
+        public string? AnswerText { get; set; }
+        public string? Reference { get; set; }
+        public bool ShowAnswer { get; set; }
+    }
+}
