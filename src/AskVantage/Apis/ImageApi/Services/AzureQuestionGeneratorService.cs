@@ -8,7 +8,7 @@ using System.Threading;
 
 namespace ImageApi.Services;
 
-public class AzureQuestionGeneratorService(AzureOpenAIClient openAIClient) : IQuestionGeneratorService
+public class AzureQuestionGeneratorService(AzureOpenAIClient openAIClient, ILogger<AzureQuestionGeneratorService> logger) : IQuestionGeneratorService
 {
     private const string AssistantName = "questionGenerator";
 
@@ -28,24 +28,29 @@ public class AzureQuestionGeneratorService(AzureOpenAIClient openAIClient) : IQu
 
         var builder = new StringBuilder();
 
-        await foreach (StreamingUpdate streamingUpdate in assistantClient.CreateRunStreamingAsync(threadResponse.Value.Id, assistant.Id, runOptions, cancellationToken))
+        await foreach (var streamingUpdate in assistantClient.CreateRunStreamingAsync(threadResponse.Value.Id, assistant.Id, runOptions, cancellationToken))
         {
-            if (streamingUpdate.UpdateKind == StreamingUpdateReason.RunCreated)
+            switch (streamingUpdate.UpdateKind)
             {
-                Console.WriteLine($"--- Run started! ---");
-            }
-            else if (streamingUpdate.UpdateKind == StreamingUpdateReason.RunFailed && streamingUpdate is RunUpdate runUpdate)
-            {
-                Console.WriteLine($"--- Run failed! ---");
-                Console.WriteLine(runUpdate.Value.LastError.Message);
-            }
-            else if (streamingUpdate is MessageContentUpdate contentUpdate)
-            {                
-                builder.Append(contentUpdate.Text);
+                case StreamingUpdateReason.RunCreated:
+                    logger.LogInformation("--- Run started! ---");
+                    break;
+                case StreamingUpdateReason.RunFailed when streamingUpdate is RunUpdate runUpdate:
+                    logger.LogError("Run failed. Error: {errorMessage}", runUpdate.Value.LastError.Message);
+                    break;
+                default:
+                {
+                    if (streamingUpdate is MessageContentUpdate contentUpdate)
+                    {                
+                        builder.Append(contentUpdate.Text);
+                    }
+
+                    break;
+                }
             }
         }
 
-        _ = await assistantClient.DeleteThreadAsync(threadResponse.Value.Id);
+        _ = await assistantClient.DeleteThreadAsync(threadResponse.Value.Id, cancellationToken);
 
         string text = builder.ToString();
         text = text.Replace("```json", string.Empty);
@@ -75,22 +80,28 @@ public class AzureQuestionGeneratorService(AzureOpenAIClient openAIClient) : IQu
         }
         catch (RequestFailedException ex) when (ex.Status == 404)
         {
+            logger.LogWarning("Assistant not found, creating new assistant");
             // The assistant does not exist, so create it
         }
 
         if (assistant != null)
         {
+            logger.LogTrace("Assistant found, re-using it.");
             return assistant;
         }
+        
+        const string modelName = "gpt-4o";
+        logger.LogTrace("Creating new assistant using model name: {modelName}", modelName);
 
-        const string ModelName = "gpt-4o";
-        var assistantResponse = await assistantClient.CreateAssistantAsync(ModelName, new AssistantCreationOptions
+        var assistantResponse = await assistantClient.CreateAssistantAsync(modelName, new AssistantCreationOptions
         {
             Name = AssistantName,
-            Instructions = @"You are an assistant that will help students learn. Students will upload text that was created by taking a photograph of a book. The text may contain typo's.
-                             You will create 3 relevant questions that the student will likely need to answer about the text. Also add the answers and if possible, a reference to where in the input the answer could be found.
-                             Never make up any facts.
-                             JSON Schema: [{""question"": ""some question"", ""answer"": ""the answer"", ""reference"": ""reference to answer""}]",
+            Instructions = """
+                           You are an assistant that will help students learn. Students will upload text that was created by taking a photograph of a book. The text may contain typo's.
+                                                        You will create 3 relevant questions that the student will likely need to answer about the text. Also add the answers and if possible, a reference to where in the input the answer could be found.
+                                                        Never make up any facts.
+                                                        JSON Schema: [{"question": "some question", "answer": "the answer", "reference": "reference to answer"}]
+                           """,
             Tools = { }
         }, cancellationToken);
 
