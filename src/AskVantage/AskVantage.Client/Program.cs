@@ -32,6 +32,7 @@ namespace AskVantage.Client
                 .AddPolicyHandler(HttpClientPolicies.GetTimeoutPolicy())
                 .AddPolicyHandler((sp, req) => HttpClientPolicies.GetRetryPolicy(sp));
 
+            builder.Services.AddSingleton<IImageApiHubClient, ImageApiHubClient>();
 
             await builder.Build().RunAsync();
         }

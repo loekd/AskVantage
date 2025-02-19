@@ -20,7 +20,7 @@ public class OllamaQuestionGeneratorService(IOllamaApiClientFactory ollamaApiCli
             OllamaApiClient ollamaApiClient = await ollamaApiClientFactory.CreateClient();
             input = CleanInput(input);
             var chatRequest = GetOcrChatRequest(input);
-            string answer = await SendChatRequest(input, ollamaApiClient, chatRequest, cancellationToken);
+            string answer = await SendChatRequest(ollamaApiClient, chatRequest, cancellationToken);
             var response = GetAnswerFromResult(answer);
             if (response != null)
                 return response;
@@ -61,7 +61,7 @@ public class OllamaQuestionGeneratorService(IOllamaApiClientFactory ollamaApiCli
         };
     }
 
-    private static async Task<string> SendChatRequest(string input, OllamaApiClient ollamaApiClient, ChatRequest ocrChatRequest, CancellationToken cancellationToken)
+    private static async Task<string> SendChatRequest(OllamaApiClient ollamaApiClient, ChatRequest ocrChatRequest, CancellationToken cancellationToken)
     {
         StringBuilder stringBuilder = new();
 

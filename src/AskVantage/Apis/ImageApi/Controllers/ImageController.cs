@@ -1,33 +1,42 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using ImageApi.Hubs;
 using ImageApi.Models;
 using ImageApi.Services;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ImageApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ImageController(ILogger<ImageController> logger, IImageOcrService imageOcrService) : ControllerBase
+public class ImageController(ILogger<ImageController> logger, IImageOcrService imageOcrService, IHubContext<ImageApiHub, IImageApiHubClient> hubContext) : ControllerBase
 {
     [HttpPost("analyze")]
     [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(ImageOcrResult))]
     [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
-    public async Task<IActionResult> AnalyzeImage([FromBody] Models.Image imageRequest)
+    public IActionResult AnalyzeImage([FromBody] Models.Image imageRequest)
     {
         logger.LogInformation("Processing OCR for image {ImageId}", imageRequest.Id);
-        try
+        Task.Run(async () =>
         {
-            var result = await imageOcrService.GetTextAsync(imageRequest.Content, HttpContext.RequestAborted);
-            return Ok(new ImageOcrResult
+            try
             {
-                ImageId = imageRequest.Id,
-                Text = result
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to perform OCR.");
-            return StatusCode((int)HttpStatusCode.InternalServerError);
-        }
+                using var cts = new CancellationTokenSource();
+                string result = await imageOcrService.GetTextAsync(imageRequest.Content, cts.Token);
+                var imageOcrResult = new ImageOcrResult
+                {
+                    ImageId = imageRequest.Id,
+                    Text = result
+                };
+                await hubContext.Clients.All.OcrCompleted("user", imageOcrResult);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to perform OCR.");
+                await hubContext.Clients.All.OcrFailed(ex.Message);
+            }
+        });
+
+        return Accepted();
     }
 }

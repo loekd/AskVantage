@@ -8,7 +8,7 @@ public class ServerSideImageService : IImageService
     //Called when rendering pages on the server side, but currently not implemented
     //All service calls are intended to be made from the AskVantage.Client project (browser, WASM)
 
-    public Task<ImageOcrResult> AnalyzeImage(Image imageRequest)
+    public Task AnalyzeImage(Image imageRequest)
     {
         throw new NotImplementedException();
     }
@@ -23,7 +23,7 @@ public class ServerSideImageService : IImageService
         throw new NotImplementedException();
     }
 
-    public Task<QuestionGenerationResult> GenerateQuestions(QuestionGenerationRequest questionRequest)
+    public Task GenerateQuestions(QuestionGenerationRequest questionRequest)
     {
         throw new NotImplementedException();
     }

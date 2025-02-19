@@ -6,6 +6,7 @@
 
 @inject ISnackbar Snackbar
 @inject ILogger<Home> Logger
+@inject IImageApiHubClient ImageApiHubClient
 
 <PageTitle>Home</PageTitle>
 
@@ -83,6 +84,66 @@
     private bool IsAnalyzing { get; set; }
     private bool IsGenerating { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await ImageApiHubClient.StartAsync();
+
+        // Subscribe to the event
+        ImageApiHubClient.OcrCompleted += HandleOcrCompleted;
+        ImageApiHubClient.GenerationCompleted += HandleGenerationCompleted;
+        
+        ImageApiHubClient.Reconnected += _ =>
+        {
+            Snackbar.Add("Reconnected to server", Severity.Info);
+            return Task.CompletedTask;
+        };
+        ImageApiHubClient.Closed += _ =>
+        {
+            Snackbar.Add("Disconnected from server", Severity.Info);
+            return Task.CompletedTask;
+        };
+    }
+    
+    
+
+    private Task HandleGenerationCompleted(string user, QuestionGenerationResult questions)
+    {
+        if (questions.QuestionsAndAnswers.Any())
+        {
+            Questions = questions.QuestionsAndAnswers.Select(q => new Question
+            {
+                QuestionText = q.Question,
+                AnswerText = q.Answer,
+                Reference = q.Reference,
+                ShowAnswer = false
+            }).ToList();
+            Snackbar.Add("Question generation complete.", Severity.Info);
+        }
+        else
+        {
+            Snackbar.Add("Question generation failed.", Severity.Error);
+        }
+        IsGenerating = false;
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    private Task HandleOcrCompleted(string user, ImageOcrResult result)
+    {
+        RecognizedText = result.Text;
+        Snackbar.Add("Analysis complete.", Severity.Info);
+        StateHasChanged();
+        return Task.CompletedTask;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        ImageApiHubClient.OcrCompleted -= HandleOcrCompleted;
+        ImageApiHubClient.GenerationCompleted -= HandleGenerationCompleted;
+
+        await ImageApiHubClient.DisposeAsync();
+    }
+
     private async Task UploadFile(IBrowserFile e)
     {
         if (e.ContentType != "image/jpeg" || e.Size > MaxFileSize)
@@ -109,9 +170,10 @@
             };
 
             Snackbar.Add("Uploading and analyzing image. Please wait.", Severity.Info);
-            var result = await ImageService.AnalyzeImage(imageRequest);
-            RecognizedText = result.Text;
-            Snackbar.Add("Analysis complete.", Severity.Info);
+            await ImageService.AnalyzeImage(imageRequest);
+            // var result = await ImageService.AnalyzeImage(imageRequest);
+            // RecognizedText = result.Text;
+            // Snackbar.Add("Analysis complete.", Severity.Info);
         }
         catch (Exception ex)
         {
@@ -150,25 +212,32 @@
 
             IsGenerating = true;
             Questions?.Clear();
-
-            var questions = await ImageService.GenerateQuestions(new QuestionGenerationRequest
+            
+            await ImageService.GenerateQuestions(new QuestionGenerationRequest
             {
                 RequestId = Guid.NewGuid(),
                 Text = RecognizedText,
                 TextTitle = TextTitle
             });
 
-            if (questions.QuestionsAndAnswers.Any())
-            {
-                Questions = questions.QuestionsAndAnswers.Select(q => new Question
-                {
-                    QuestionText = q.Question,
-                    AnswerText = q.Answer,
-                    Reference = q.Reference,
-                    ShowAnswer = false
-                }).ToList();
-            }
-            Snackbar.Add("Generation complete.", Severity.Info);
+            // var questions = await ImageService.GenerateQuestions(new QuestionGenerationRequest
+            // {
+            //     RequestId = Guid.NewGuid(),
+            //     Text = RecognizedText,
+            //     TextTitle = TextTitle
+            // });
+            //
+            // if (questions.QuestionsAndAnswers.Any())
+            // {
+            //     Questions = questions.QuestionsAndAnswers.Select(q => new Question
+            //     {
+            //         QuestionText = q.Question,
+            //         AnswerText = q.Answer,
+            //         Reference = q.Reference,
+            //         ShowAnswer = false
+            //     }).ToList();
+            // }
+            // Snackbar.Add("Generation complete.", Severity.Info);
         }
         catch (Exception ex)
         {
@@ -177,7 +246,7 @@
         }
         finally
         {
-            IsGenerating = false;
+            // IsGenerating = false;
         }
     }
 

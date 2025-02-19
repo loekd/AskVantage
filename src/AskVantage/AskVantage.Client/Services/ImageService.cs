@@ -5,18 +5,16 @@ namespace AskVantage.Client.Services;
 
 public class ImageService(HttpClient imageApiClient) : IImageService
 {
-    public async Task<ImageOcrResult> AnalyzeImage(Image imageRequest)
+    public async Task AnalyzeImage(Image imageRequest)
     {
         var result = await imageApiClient.PostAsJsonAsync("api/image/analyze", imageRequest);
         result.EnsureSuccessStatusCode();
-        return await result.Content.ReadFromJsonAsync<ImageOcrResult>();
     }
 
-    public async Task<QuestionGenerationResult> GenerateQuestions(QuestionGenerationRequest questionRequest)
+    public async Task GenerateQuestions(QuestionGenerationRequest questionRequest)
     {
         var result = await imageApiClient.PostAsJsonAsync("api/question/generate", questionRequest);
         result.EnsureSuccessStatusCode();
-        return await result.Content.ReadFromJsonAsync<QuestionGenerationResult>();
     }
 
     public async Task<IEnumerable<QuestionGenerationResult>> GetQuestions()

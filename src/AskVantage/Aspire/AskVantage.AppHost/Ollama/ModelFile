@@ -1,4 +1,4 @@
-﻿FROM llama3.1
+﻿FROM llama3.2:3b
 
 # Some other great models to choose from:
 #FROM llama3.1 		--> By Meta 4.7GB

@@ -2,24 +2,14 @@
 
 namespace ImageApi.Models;
 
-public readonly record struct QuestionGenerationResult
-{
-    public Guid Id { get; init; }
+public readonly record struct QuestionGenerationResult(
+    Guid Id,
+    Guid RequestId,
+    string OriginalText,
+    string TextTitle,
+    ImmutableList<QuestionAndAnswer> QuestionsAndAnswers);
 
-    public Guid RequestId { get; init; }
-
-    public string OriginalText { get; init; }
-
-    public string TextTitle { get; init; }
-
-    public ImmutableList<QuestionAndAnswer> QuestionsAndAnswers{ get; init; }
-}
-
-public readonly record struct QuestionAndAnswer
-{
-    public string Question { get; init; }
-
-    public string Answer { get; init; }
-
-    public string Reference { get; init; }
-}
+public readonly record struct QuestionAndAnswer(
+    string Question,
+    string Answer,
+    string Reference);

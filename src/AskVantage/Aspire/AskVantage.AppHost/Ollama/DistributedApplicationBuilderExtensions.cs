@@ -34,7 +34,7 @@ public static class DistributedApplicationBuilderExtensions
                   .WithVolume(ModelVolumeName, ModelVolumePath)
                   .WithBindMount(ModelFileVolume, ModelFilePath, true)
                   .WithHttpEndpoint(port, 11434, OllamaResource.OllamaEndpointName)
-                  //.WithExternalHttpEndpoints()
+                  .WithLifetime(ContainerLifetime.Persistent)
                   .ExcludeFromManifest()
                   .PublishAsContainer();
 

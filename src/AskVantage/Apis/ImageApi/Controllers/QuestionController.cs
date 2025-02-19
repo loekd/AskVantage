@@ -3,12 +3,14 @@ using ImageApi.Models;
 using ImageApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using ImageApi.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace ImageApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class QuestionController(IQuestionGeneratorService ocrTextRecognizerService, ITextStateService textStateService, ILogger<QuestionController> logger) : ControllerBase
+public class QuestionController(IQuestionGeneratorService ocrTextRecognizerService, ITextStateService textStateService, IServiceScopeFactory serviceScopeFactory, ILogger<QuestionController> logger) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(IEnumerable<QuestionGenerationResult>))]
@@ -22,7 +24,7 @@ public class QuestionController(IQuestionGeneratorService ocrTextRecognizerServi
             var allTexts = await textStateService.GetAllTexts(HttpContext.RequestAborted);
             var response = allTexts
                 .OrderBy(t => t.Title)
-                .Select(t => TextStateExtensions.BuildResponse(t));
+                .Select(t => t.BuildResponse());
             return base.Ok(response);
         }
         catch (Exception ex)
@@ -35,33 +37,45 @@ public class QuestionController(IQuestionGeneratorService ocrTextRecognizerServi
     [HttpPost("generate")]
     [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(QuestionGenerationResult))]
     [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
-    public async Task<IActionResult> GenerateQuestionsForText([FromBody] QuestionGenerationRequest request)
+    public IActionResult GenerateQuestionsForText([FromBody] QuestionGenerationRequest request)
     {
         logger.LogInformation("Generating questions for request {RequestId}", request.RequestId);
-
-        try
+        Task.Run(async () =>
         {
-            TextState? textState;
-            var generatedResult = await ocrTextRecognizerService.GenerateQuestions(request.Text, HttpContext.RequestAborted);
-
-            //save state
-            if (generatedResult is not null && generatedResult.Any())
+            using var scope = serviceScopeFactory.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<IHubContext<ImageApiHub, IImageApiHubClient>>();
+            var stateService = scope.ServiceProvider.GetRequiredService<ITextStateService>();
+            
+            try
             {
-                textState = new TextState(request.TextTitle, request.Text, generatedResult.Select(r => new QuestionState(r.Question, r.Answer, r.Reference)).ToArray());
-                await textStateService.SaveText(textState.Value, HttpContext.RequestAborted);
+                using var cts = new CancellationTokenSource();
+                TextState? textState;
+                var generatedResult = (await ocrTextRecognizerService.GenerateQuestions(request.Text, cts.Token)).ToArray();
+                
+                //save state
+                if (generatedResult.Length != 0)
+                {
+                    textState = new TextState(request.TextTitle, request.Text,
+                        generatedResult.Select(r => new QuestionState(r.Question, r.Answer, r.Reference)).ToArray());
+                    await stateService.SaveText(textState.Value, cts.Token);    
+                }
+
+                //fetch all questions and answers for this text
+                textState = await stateService.GetSingleText(request.TextTitle, cts.Token)!;
+                if (textState != null)
+                {
+                    var response = textState.Value.BuildResponse(request.RequestId);
+                    await context.Clients.All.GenerationCompleted("user", response);
+                }
             }
-
-            //fetch all questions and answers for this text
-            textState = await textStateService.GetSingleText(request.TextTitle, HttpContext.RequestAborted)!;
-            var response = TextStateExtensions.BuildResponse(textState.Value, request.RequestId);
-
-            return base.Ok(response);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "An error occurred while improving OCR text.");
-            return StatusCode((int)HttpStatusCode.InternalServerError);
-        }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "An error occurred while improving OCR text.");
+                await context.Clients.All.GenerationFailed(ex.Message);
+            }
+        });
+        
+        return Accepted();
     }
 
     [HttpDelete("{key}")]

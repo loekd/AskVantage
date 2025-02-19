@@ -22,6 +22,7 @@ namespace AskVantage
             // Add services to the container.
             builder.Services.AddMudServices();
             builder.Services.AddSingleton<IImageService, ServerSideImageService>();
+            builder.Services.AddSingleton<IImageApiHubClient, ServerSideImageApiHubClient>();
 
             builder.Services.AddRazorComponents()
                 .AddInteractiveWebAssemblyComponents();
@@ -56,6 +57,7 @@ namespace AskVantage
             //Forward calls to image API
             app.MapForwarder("/api/image/{**catch-all}", "http://imageapi", "/api/image/{**catch-all}");
             app.MapForwarder("/api/question/{**catch-all}", "http://imageapi", "/api/question/{**catch-all}");
+            app.MapForwarder("/hub/{**catch-all}", "http://imageapi", "/hub/{**catch-all}");
 
             app.Run();
         }

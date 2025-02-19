@@ -2,6 +2,7 @@ using Azure.AI.Vision.ImageAnalysis;
 using Azure;
 using ImageApi.Services;
 using Grpc.Net.Client;
+using ImageApi.Hubs;
 
 namespace ImageApi;
 
@@ -20,18 +21,21 @@ public static class Program
         //Add Azure OCR client:
         builder.AddAzureCognitiveServicesOcr();
 
-        builder.AddAzureOpenAIClient("openAiConnection");
-        builder.Services.AddScoped<IQuestionGeneratorService, AzureQuestionGeneratorService>();
+        //builder.AddAzureOpenAIClient("openAiConnection");
+        //builder.Services.AddScoped<IQuestionGeneratorService, AzureQuestionGeneratorService>();
+        
+        builder.AddOllamaQuestionGenerator();
 
         builder.Services.AddControllers();
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
+        builder.Services.AddSignalR();
 
         var app = builder.Build();
 
         app.MapDefaultEndpoints();
-
+    
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {
@@ -47,7 +51,7 @@ public static class Program
 
 
         app.MapControllers();
-
+        app.MapHub<ImageApiHub>("/hub");
         app.Run();
     }
 }
@@ -58,7 +62,7 @@ internal static class BuilderExtensions
         builder.Services.AddScoped<ITextStateService, DaprTextStateService>();
         
         //configure Dapr Client with support for 10MB messages
-        builder.Services.AddDaprClient(builder => builder.UseGrpcChannelOptions(new GrpcChannelOptions
+        builder.Services.AddDaprClient(bld => bld.UseGrpcChannelOptions(new GrpcChannelOptions
         {
             MaxReceiveMessageSize = 10 * 1024 * 1024,
             MaxSendMessageSize = 10 * 1024 * 1024
