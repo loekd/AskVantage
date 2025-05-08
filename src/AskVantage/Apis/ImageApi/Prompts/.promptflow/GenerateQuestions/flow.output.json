@@ -1,0 +1,19 @@
+{
+  "questions": [
+    {
+      "question": "What are the main ingredients of the dish?",
+      "answer": "eggs, cheese, pancetta, and black pepper",
+      "reference": "A classic Italian pasta dish made with eggs, cheese, pancetta, and black pepper."
+    },
+    {
+      "question": "How is the creamy sauce created?",
+      "answer": "by mixing pancetta with the pasta, eggs, and cheese",
+      "reference": "To make it, you cook the pancetta in a pan, then mix it with the pasta, eggs, and cheese to create a creamy sauce."
+    },
+    {
+      "question": "What is the dish served with on top?",
+      "answer": "a sprinkle of black pepper",
+      "reference": "The dish is typically served with a sprinkle of black pepper on top."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "chat_list": [],
+  "prompty_chat_list": [
+    {
+      "name": "GenerateQuestions.prompty",
+      "inputs": {
+        "input_text": "    A classic Italian pasta dish made with eggs, cheese, pancetta, and black pepper.    To make it, you cook the pancetta in a pan, then mix it with the pasta, eggs,    and cheese to create a creamy sauce. The dish is typically served with a sprinkle    of black pepper on top.  "
+      }
+    },
+    {
+      "name": "GenerateQuestions.local.prompty",
+      "inputs": {
+        "input_text": "    A classic Italian pasta dish made with eggs, cheese, pancetta, and black pepper.    To make it, you cook the pancetta in a pan, then mix it with the pasta, eggs,    and cheese to create a creamy sauce. The dish is typically served with a sprinkle    of black pepper on top.  "
+      }
+    }
+  ],
+  "init": {
+    "GenerateQuestions.prompty": {}
+  }
+}

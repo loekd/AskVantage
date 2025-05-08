@@ -7,11 +7,16 @@
     <UserSecretsId>2c2b50ba-d0d2-4aa9-9e66-9f9787512fb4</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..\..</DockerfileContext>
+    <NoWarn>SKEXP0001;SKEXP0010;SKEXP0110;SKEXP0040</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.AI.OpenAI" Version="2.1.0-beta.2" />
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.2.0-beta.1" />
     <PackageReference Include="Dapr.AspNetCore" Version="1.14.0" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.39.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.39.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.39.0-alpha" />
+    <PackageReference Include="Microsoft.SemanticKernel.Prompty" Version="1.39.0-alpha"/>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
     <PackageReference Include="Azure.AI.Vision.ImageAnalysis" Version="1.0.0" />
     <PackageReference Include="OllamaSharp" Version="4.0.7" />
@@ -22,6 +27,19 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Aspire\AskVantage.ServiceDefaults\AskVantage.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Prompts\GenerateQuestions.prompty">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Prompts\GenerateQuestions.local.prompty">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Prompts\" />
   </ItemGroup>
 
 </Project>

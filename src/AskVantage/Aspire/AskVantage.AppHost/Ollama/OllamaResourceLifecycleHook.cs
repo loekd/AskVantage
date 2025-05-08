@@ -76,7 +76,7 @@ internal class OllamaResourceLifecycleHook(ResourceNotificationService notificat
             double newPercentage = status.Percent;
             if (newPercentage != oldPercentage)
             {
-                string message = $"Downloading model '{model}' ({newPercentage}%)";
+                string message = $"Downloading model '{model}' ({newPercentage:F1}%)";
                 await notificationService.PublishUpdateAsync(resource, state => state with { State = new ResourceStateSnapshot(message, KnownResourceStateStyles.Info) });
                 oldPercentage = newPercentage;
             }

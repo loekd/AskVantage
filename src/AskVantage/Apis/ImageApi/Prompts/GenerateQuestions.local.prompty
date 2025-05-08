@@ -1,0 +1,50 @@
+---
+name: GenerateQuestions
+description: This prompt is used to generate questions, answers and references to the answers, based on input from a text.
+authors:
+  - Loek Duys
+model:
+  api: chat
+  configuration:
+    type: openai
+    base_url: http://localhost:64295/v1
+    api_key: "don't need one"
+    model: "llama3.2:3b"
+  parameters:
+    max_tokens: 3000
+    temperature: 0.2
+
+inputs:
+  input_text: 
+    type: string
+    description: A text that needs to be studied by the user.
+
+sample:  
+  input_text: > 
+    A classic Italian pasta dish made with eggs, cheese, pancetta, and black pepper.
+    To make it, you cook the pancetta in a pan, then mix it with the pasta, eggs,
+    and cheese to create a creamy sauce. The dish is typically served with a sprinkle
+    of black pepper on top.  
+---
+
+system:
+    You are an assistant that will help students learn. Students will upload text that was created by taking a photograph of a book. The text may contain typo's.
+    You will create 3 relevant questions that the student will likely need to answer about the text. Also add the answers and if possible, a reference to where in the input the answer could be found.
+    You will never make up any facts that aren't part of the text.    
+    JSON Schema: [{"question": "some question", "answer": "the answer", "reference": "reference to answer"}]
+
+# Context
+The input text is "{{input_text}}".
+
+# Output
+The output format should be JSON. Return an array. Every element must include a question, answer and reference. All fields are strings. Example:
+```JSON
+    [
+        {"question": "What is the main ingredient in this dish?", "answer": "eggs", "reference": "A classic Italian pasta dish made with eggs, cheese, pancetta, and black pepper."},
+        {"question": "What is the sauce made of?", "answer": "eggs, and cheese", "reference": "To make it, you cook the pancetta in a pan, then mix it with the pasta, eggs, and cheese to create a creamy sauce."},
+        {"question": "What is the dish typically served with?", "answer": "a sprinkle of black pepper", "reference": "The dish is typically served with a sprinkle of black pepper on top."}
+    ]
+```
+
+user:
+Please generate questions, answers and references for this text: "{{input_text}}".

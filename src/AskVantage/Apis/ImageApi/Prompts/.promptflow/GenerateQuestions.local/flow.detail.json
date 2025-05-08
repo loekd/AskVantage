@@ -1,0 +1,38 @@
+{
+  "flow_runs": [
+    {
+      "run_id": "2de0c4d4-e04d-40e7-866a-1c7fc7d784af_0",
+      "status": "Completed",
+      "error": null,
+      "inputs": {
+        "input_text": "A classic Italian pasta dish made with eggs, cheese, pancetta, and black pepper. To make it, you cook the pancetta in a pan, then mix it with the pasta, eggs, and cheese to create a creamy sauce. The dish is typically served with a sprinkle of black pepper on top.  \n"
+      },
+      "output": {
+        "output": "Here are three relevant questions that the student will likely need to answer about the text:\n\n[\n    {\"question\": \"What ingredients are used in this Italian pasta dish?\", \"answer\": \"eggs, cheese, pancetta, and black pepper\", \"reference\": \"A classic Italian pasta dish made with eggs, cheese, pancetta, and black pepper.\"},\n    {\"question\": \"How is the sauce created for this dish?\", \"answer\": \"by mixing it with the pasta, eggs, and cheese in a pan\", \"reference\": \"To make it, you cook the pancetta in a pan, then mix it with the pasta, eggs, and cheese to create a creamy sauce.\"},\n    {\"question\": \"What is typically served on top of this dish?\", \"answer\": \"a sprinkle of black pepper\", \"reference\": \"The dish is typically served with a sprinkle of black pepper on top.\"}\n]"
+      },
+      "metrics": null,
+      "request": null,
+      "parent_run_id": "2de0c4d4-e04d-40e7-866a-1c7fc7d784af",
+      "root_run_id": "2de0c4d4-e04d-40e7-866a-1c7fc7d784af",
+      "source_run_id": null,
+      "flow_id": "default_flow_id",
+      "start_time": "2025-02-27T06:50:41.492960Z",
+      "end_time": "2025-02-27T06:51:23.120059Z",
+      "index": 0,
+      "api_calls": [],
+      "name": "",
+      "description": "",
+      "tags": null,
+      "system_metrics": {
+        "duration": 41.627099
+      },
+      "result": {
+        "output": "Here are three relevant questions that the student will likely need to answer about the text:\n\n[\n    {\"question\": \"What ingredients are used in this Italian pasta dish?\", \"answer\": \"eggs, cheese, pancetta, and black pepper\", \"reference\": \"A classic Italian pasta dish made with eggs, cheese, pancetta, and black pepper.\"},\n    {\"question\": \"How is the sauce created for this dish?\", \"answer\": \"by mixing it with the pasta, eggs, and cheese in a pan\", \"reference\": \"To make it, you cook the pancetta in a pan, then mix it with the pasta, eggs, and cheese to create a creamy sauce.\"},\n    {\"question\": \"What is typically served on top of this dish?\", \"answer\": \"a sprinkle of black pepper\", \"reference\": \"The dish is typically served with a sprinkle of black pepper on top.\"}\n]"
+      },
+      "upload_metrics": false,
+      "otel_trace_id": null,
+      "message_format": "basic"
+    }
+  ],
+  "node_runs": []
+}

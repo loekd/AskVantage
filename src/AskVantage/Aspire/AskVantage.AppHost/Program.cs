@@ -17,7 +17,7 @@ builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 
 var imageApiStateStore = builder.AddDaprStateStore("imageapistatestorecomponent", new DaprComponentOptions { });
 
-var localQuestionGenerator = builder.AddOllama("questiongenerator", port: 11434, useNvidiaGpu: false);
+var localQuestionGenerator = builder.AddOllama("questiongenerator", modelName: "llama3.2:3b", port: 11434, useNvidiaGpu: false);
 
 var openai = builder.AddConnectionString("openAiConnection");
 

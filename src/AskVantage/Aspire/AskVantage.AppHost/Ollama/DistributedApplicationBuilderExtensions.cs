@@ -15,7 +15,7 @@ public static class DistributedApplicationBuilderExtensions
     private const string ModelFileVolume = "./Ollama/ModelFile";
     private const string ModelFilePath = "/root/.ollama/ModelFile";
 
-    private const string DefaultModelName = "llama3.1"; //model name should match the name in the model file, in the 'FROM' expression.
+    private const string DefaultModelName = "llama3.2:3b"; //model name should match the name in the model file, in the 'FROM' expression.
 
     /// <summary>
     /// Adds an Ollama container to the application model.
@@ -32,7 +32,7 @@ public static class DistributedApplicationBuilderExtensions
                       Tag = OllamaImageTag
                   })
                   .WithVolume(ModelVolumeName, ModelVolumePath)
-                  .WithBindMount(ModelFileVolume, ModelFilePath, true)
+                  //.WithBindMount(ModelFileVolume, ModelFilePath, true)
                   .WithHttpEndpoint(port, 11434, OllamaResource.OllamaEndpointName)
                   .WithLifetime(ContainerLifetime.Persistent)
                   .ExcludeFromManifest()
