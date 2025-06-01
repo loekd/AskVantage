@@ -108,7 +108,7 @@ internal static class BuilderExtensions
         // This is necessary for the Prompty functions to log.
         // This gives us access to the rendered prompt.
         var loggerFactory = services.BuildServiceProvider().GetService<ILoggerFactory>();
-        if (environment.IsDevelopment())
+        if (false) //environment.IsDevelopment())
         {
             services
                 .AddOpenAIChatCompletion(ModelNames.Llama3_2_3b, new Uri("http://questiongenerator/v1"), apiKey: "Not Needed");

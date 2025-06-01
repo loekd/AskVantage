@@ -11,17 +11,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Azure.AI.OpenAI" Version="2.2.0-beta.1" />
-    <PackageReference Include="Dapr.AspNetCore" Version="1.14.0" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.39.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.39.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.39.0-alpha" />
-    <PackageReference Include="Microsoft.SemanticKernel.Prompty" Version="1.39.0-alpha"/>
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.2.0-beta.4" />
+    <PackageReference Include="Dapr.AspNetCore" Version="1.15.4" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.54.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.54.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Agents.OpenAI" Version="1.54.0-preview" />
+    <PackageReference Include="Microsoft.SemanticKernel.Prompty" Version="1.54.0-beta" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0" />
     <PackageReference Include="Azure.AI.Vision.ImageAnalysis" Version="1.0.0" />
-    <PackageReference Include="OllamaSharp" Version="4.0.7" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="7.0.0" />
-    <PackageReference Include="Aspire.Azure.AI.OpenAI" Version="9.0.0-preview.5.24551.3" />
+    <PackageReference Include="OllamaSharp" Version="5.2.2" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.2" />
+    <PackageReference Include="Aspire.Azure.AI.OpenAI" Version="9.3.0-preview.1.25265.20" />
 
   </ItemGroup>
 

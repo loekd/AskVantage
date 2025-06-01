@@ -1,4 +1,4 @@
-using Aspire.Hosting.Dapr;
+using CommunityToolkit.Aspire.Hosting.Dapr;
 using AskVantage.AppHost.Ollama;
 using Microsoft.Extensions.Configuration;
 
@@ -15,7 +15,18 @@ builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
     ["Dashboard:Otlp:Cors"] = "*"
 });
 
-var imageApiStateStore = builder.AddDaprStateStore("imageapistatestorecomponent", new DaprComponentOptions { });
+//A containerized pub/sub message broker & state store:
+var builderPassword = builder.AddParameter("Redis-Password", secret: true, valueGetter: () => "RunningLocallySoNoNeedForSecurity!");
+var redis = builder
+    .AddRedis("redis", password: builderPassword, port: 6380)
+    .WithLifetime(ContainerLifetime.Persistent)
+    .WithRedisInsight();
+
+const string daprComponentsPath = "/Users/loekd/projects/AskVantage/src/AskVantage/Aspire/AskVantage.AppHost/DaprComponents";
+var imageApiStateStore = builder.AddDaprStateStore("imageapistatestorecomponent", new DaprComponentOptions
+{
+    LocalPath = $"{daprComponentsPath}/statestore.yaml"
+}).WaitFor(redis);
 
 var localQuestionGenerator = builder.AddOllama("questiongenerator", modelName: "llama3.2:3b", port: 11434, useNvidiaGpu: false);
 
@@ -25,12 +36,20 @@ var ocrApiKey = builder.AddParameter("ComputerVision-ApiKey", secret: true, valu
 var ocrEndpoint = builder.AddParameter("ComputerVision-Endpoint", secret: true, valueGetter: ()=> builder.Configuration["ComputerVision:Endpoint"]!);
 
 var imageApi = builder.AddProject<Projects.ImageApi>("imageapi")
-    .WithReference(localQuestionGenerator.GetEndpoint(OllamaResource.OllamaEndpointName))
+    //.WithReference(localQuestionGenerator.GetEndpoint(OllamaResource.OllamaEndpointName))
     .WithReference(imageApiStateStore)
-    .WithDaprSidecar()
-    //.WithReference(openai)
+    .WithDaprSidecar(opt =>
+    {
+        opt.WithOptions(new DaprSidecarOptions()
+        {
+            AppId = "imageapi",
+            SchedulerHostAddress = "" // Set to empty string to disable scheduler
+        });
+    })
+    .WithReference(openai)
     .WithEnvironment("COMPUTERVISION__ENDPOINT", ocrEndpoint)
-    .WithEnvironment("COMPUTERVISION__APIKEY", ocrApiKey);
+    .WithEnvironment("COMPUTERVISION__APIKEY", ocrApiKey)
+    .WaitFor(redis);
 
 var frontend = builder.AddProject<Projects.AskVantage>("AskVantage")
     .WithReference(imageApi)
