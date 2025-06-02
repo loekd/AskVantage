@@ -1,6 +1,6 @@
-﻿using ImageApi.Models;
+﻿using System.Collections.Immutable;
+using ImageApi.Models;
 using ImageApi.Services;
-using System.Collections.Immutable;
 
 namespace ImageApi.Mappings;
 

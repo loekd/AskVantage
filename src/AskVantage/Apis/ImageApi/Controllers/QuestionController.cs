@@ -1,16 +1,20 @@
-﻿using ImageApi.Mappings;
+﻿using System.Net;
+using ImageApi.Hubs;
+using ImageApi.Mappings;
 using ImageApi.Models;
 using ImageApi.Services;
 using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using ImageApi.Hubs;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ImageApi.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-public class QuestionController(IQuestionGeneratorService ocrTextRecognizerService, ITextStateService textStateService, IServiceScopeFactory serviceScopeFactory, ILogger<QuestionController> logger) : ControllerBase
+public class QuestionController(
+    IQuestionGeneratorService ocrTextRecognizerService,
+    ITextStateService textStateService,
+    IServiceScopeFactory serviceScopeFactory,
+    ILogger<QuestionController> logger) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(IEnumerable<QuestionGenerationResult>))]
@@ -45,19 +49,20 @@ public class QuestionController(IQuestionGeneratorService ocrTextRecognizerServi
             using var scope = serviceScopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<IHubContext<ImageApiHub, IImageApiHubClient>>();
             var stateService = scope.ServiceProvider.GetRequiredService<ITextStateService>();
-            
+
             try
             {
                 using var cts = new CancellationTokenSource();
                 TextState? textState;
-                var generatedResult = (await ocrTextRecognizerService.GenerateQuestions(request.Text, cts.Token)).ToArray();
-                
+                var generatedResult =
+                    (await ocrTextRecognizerService.GenerateQuestions(request.Text, cts.Token)).ToArray();
+
                 //save state
                 if (generatedResult.Length != 0)
                 {
                     textState = new TextState(request.TextTitle, request.Text,
                         generatedResult.Select(r => new QuestionState(r.Question, r.Answer, r.Reference)).ToArray());
-                    await stateService.SaveText(textState.Value, cts.Token);    
+                    await stateService.SaveText(textState.Value, cts.Token);
                 }
 
                 //fetch all questions and answers for this text
@@ -74,7 +79,7 @@ public class QuestionController(IQuestionGeneratorService ocrTextRecognizerServi
                 await context.Clients.All.GenerationFailed(ex.Message);
             }
         });
-        
+
         return Accepted();
     }
 

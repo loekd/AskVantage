@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35005.142
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskVantage", "AskVantage\AskVantage\AskVantage.csproj", "{78942C13-A450-4F0E-BAA8-C701A57E2EF2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskVantage.Frontend", "AskVantage\AskVantage.Frontend\AskVantage.Frontend.csproj", "{78942C13-A450-4F0E-BAA8-C701A57E2EF2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskVantage.Client", "AskVantage\AskVantage.Client\AskVantage.Client.csproj", "{711CE2BC-6B7F-45DE-8CD5-E906D56257D4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskVantage.Frontend.Client", "AskVantage\AskVantage.Frontend.Client\AskVantage.Frontend.Client.csproj", "{711CE2BC-6B7F-45DE-8CD5-E906D56257D4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AskVantage.AppHost", "AskVantage\Aspire\AskVantage.AppHost\AskVantage.AppHost.csproj", "{F9211C35-F67D-420A-9316-45844F482947}"
 EndProject

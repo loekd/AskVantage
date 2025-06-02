@@ -1,20 +1,23 @@
-using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using ImageApi.Hubs;
 using ImageApi.Models;
 using ImageApi.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 
 namespace ImageApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ImageController(ILogger<ImageController> logger, IImageOcrService imageOcrService, IHubContext<ImageApiHub, IImageApiHubClient> hubContext) : ControllerBase
+public class ImageController(
+    ILogger<ImageController> logger,
+    IImageOcrService imageOcrService,
+    IHubContext<ImageApiHub, IImageApiHubClient> hubContext) : ControllerBase
 {
     [HttpPost("analyze")]
     [ProducesResponseType((int)HttpStatusCode.OK, Type = typeof(ImageOcrResult))]
     [ProducesResponseType((int)HttpStatusCode.InternalServerError)]
-    public IActionResult AnalyzeImage([FromBody] Models.Image imageRequest)
+    public IActionResult AnalyzeImage([FromBody] Image imageRequest)
     {
         logger.LogInformation("Processing OCR for image {ImageId}", imageRequest.Id);
         Task.Run(async () =>
