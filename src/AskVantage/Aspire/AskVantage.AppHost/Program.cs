@@ -18,7 +18,7 @@ builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 
 //A containerized pub/sub message broker & state store:
 var builderPassword =
-    builder.AddParameter("Redis-Password", secret: true, valueGetter: () => "RunningLocallySoNoNeedForSecurity!");
+    builder.AddParameter("Redis-Password", secret: true, valueGetter: () => builder.Configuration["RedisPassword"]);
 var redis = builder
     .AddRedis("redis", password: builderPassword, port: 6380)
     .WithLifetime(ContainerLifetime.Persistent)
