@@ -17,10 +17,10 @@ builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
 });
 
 //A containerized pub/sub message broker & state store:
-var builderPassword =
-    builder.AddParameter("Redis-Password", secret: true, valueGetter: () => builder.Configuration["RedisPassword"]);
+var redisPassword =
+    builder.AddParameter("Redis-Password", secret: true, valueGetter: () => builder.Configuration["RedisPassword"]!);
 var redis = builder
-    .AddRedis("redis", password: builderPassword, port: 6380)
+    .AddRedis("redis", password: redisPassword, port: 6380)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithRedisInsight();
 
@@ -31,18 +31,24 @@ var imageApiStateStore = builder.AddDaprStateStore("imageapistatestorecomponent"
     LocalPath = $"{daprComponentsPath}/statestore.yaml"
 }).WaitFor(redis);
 
-var localQuestionGenerator =
-    builder.AddOllama("questiongenerator", modelName: "llama3.2:3b", port: 11434, useNvidiaGpu: false);
+bool runLocalOllama = builder.Configuration.GetValue<bool>("OpenAILocal:RunLocal");
+
+var localQuestionGenerator = builder.AddOllama("questiongenerator", modelName: "llama3.2:3b", port: 11434, useNvidiaGpu: false);
 
 var openai = builder.AddConnectionString("openAiConnection");
+var openAiApiKey = builder.AddParameter("OpenAiApiKey", secret: true,
+    valueGetter: () => runLocalOllama ? builder.Configuration["OpenAILocal:ApiKey"]! : builder.Configuration["OpenAIApiKey"]!);
+var openAiEndpoint = builder.AddParameter("OpenAiEndpoint", secret: true,
+    valueGetter: () => runLocalOllama ? builder.Configuration["OpenAILocal:Endpoint"]! : builder.Configuration["OpenAIEndpoint"]!);
 
-var ocrApiKey = builder.AddParameter("ComputerVision-ApiKey", secret: true,
-    valueGetter: () => builder.Configuration["ComputerVision:ApiKey"]!);
-var ocrEndpoint = builder.AddParameter("ComputerVision-Endpoint", secret: true,
-    valueGetter: () => builder.Configuration["ComputerVision:Endpoint"]!);
+
+var ocrApiKey = builder.AddParameter("ComputerVisionApiKey", secret: true,
+    valueGetter: () => builder.Configuration["ComputerVisionApiKey"]!);
+var ocrEndpoint = builder.AddParameter("ComputerVisionEndpoint", secret: true,
+    valueGetter: () => builder.Configuration["ComputerVisionEndpoint"]!);
 
 var imageApi = builder.AddProject<ImageApi>("imageapi")
-    .WithReference(localQuestionGenerator.GetEndpoint(OllamaResource.OllamaEndpointName))
+    .WithReference(localQuestionGenerator.Resource.Endpoint)
     .WithReference(imageApiStateStore)
     .WithDaprSidecar(opt =>
     {
@@ -55,6 +61,9 @@ var imageApi = builder.AddProject<ImageApi>("imageapi")
     .WithReference(openai)
     .WithEnvironment("COMPUTERVISION__ENDPOINT", ocrEndpoint)
     .WithEnvironment("COMPUTERVISION__APIKEY", ocrApiKey)
+    .WithEnvironment("OPENAI__ENDPOINT", openAiEndpoint)
+    .WithEnvironment("OPENAI__APIKEY", openAiApiKey)
+    .WithEnvironment("OPENAI__RUNLOCAL", runLocalOllama ? "true" : "false")
     //.WithReplicas(2)
     .WaitFor(redis);
 

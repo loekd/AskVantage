@@ -102,20 +102,24 @@ internal static class BuilderExtensions
     internal static IServiceCollection AddQuestionGenerator(this IServiceCollection services,
         IConfiguration configuration, IHostEnvironment environment)
     {
+        var config = OpenAiConfiguration.Get(configuration);
+        
         // Materializing the services here allows us to resolve ILoggerFactory.
         // This is necessary for the Prompty functions to log.
         // This gives us access to the rendered prompt.
         var loggerFactory = services.BuildServiceProvider().GetService<ILoggerFactory>();
-        if (false) //environment.IsDevelopment())
+        if (config.RunLocal)
+        {
             services
-                .AddOpenAIChatCompletion(ModelNames.Llama3_2_3b, new Uri("http://questiongenerator/v1"), "Not Needed");
-
-        var config = OpenAiConfiguration.Get(configuration);
-        services
-            .AddAzureOpenAIChatCompletion(ModelNames.Gpt4oMini, config.ApiEndpoint, config.ApiKey);
-
+                .AddOpenAIChatCompletion(ModelNames.Llama3_2_3b, new Uri(config.ApiEndpoint), config.ApiKey);
+        }
+        else
+        {
+            services
+                .AddAzureOpenAIChatCompletion(ModelNames.Gpt4oMini, config.ApiEndpoint, config.ApiKey);
+        }
         var kernelBuilder = services.AddKernel();
-        kernelBuilder.Plugins.AddPromptyFunctions(loggerFactory, environment.IsDevelopment());
+        kernelBuilder.Plugins.AddPromptyFunctions(loggerFactory, config.RunLocal);
         services.AddPromptyTemplates();
         services.AddTransient<IQuestionGeneratorService, OpenAIQuestionGeneratorService>();
 
@@ -123,14 +127,14 @@ internal static class BuilderExtensions
     }
 
     private static IKernelBuilderPlugins AddPromptyFunctions(this IKernelBuilderPlugins kernelPlugins,
-        ILoggerFactory? factory, bool isDevelopment)
+        ILoggerFactory? factory, bool runLocal)
     {
-        var functions = CreatePromptyFunctions(factory, isDevelopment).ToArray();
+        var functions = CreatePromptyFunctions(factory, runLocal).ToArray();
 
         return kernelPlugins.AddFromFunctions(PluginNames.Prompty, functions);
     }
 
-    private static IEnumerable<KernelFunction> CreatePromptyFunctions(ILoggerFactory? factory, bool isDevelopment)
+    private static IEnumerable<KernelFunction> CreatePromptyFunctions(ILoggerFactory? factory, bool runLocal)
     {
         string? basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
         string promptyDirectory = Path.Join(basePath, "Prompts");
@@ -141,8 +145,8 @@ internal static class BuilderExtensions
             bool isLocalTestFile = file.Contains(localTestFilePattern);
             switch (isLocalTestFile)
             {
-                case true when isDevelopment:
-                case false when !isDevelopment:
+                case true when runLocal:
+                case false when !runLocal:
                     yield return CreatePromptyFunction(file, factory);
                     break;
             }
@@ -178,23 +182,25 @@ internal static class BuilderExtensions
 
     private sealed class OpenAiConfiguration
     {
-        private OpenAiConfiguration(string apiUrl, string apiKey)
+        private OpenAiConfiguration(string apiUrl, string apiKey, bool runLocal = false)
         {
             ApiEndpoint = apiUrl;
             ApiKey = apiKey;
+            RunLocal = runLocal;
         }
 
         public string ApiEndpoint { get; }
-
         public string ApiKey { get; }
+
+        public bool RunLocal { get; }
 
         public static OpenAiConfiguration Get(IConfiguration config)
         {
-            //use either Azure OpenAI or fallback to Ollama locally
-            string openAiUrl = config["OpenAI:Endpoint"] ?? "http://questiongenerator";
-            string openAiKey = config["OpenAI:ApiKey"] ?? "Not Needed";
-
-            return new OpenAiConfiguration(openAiUrl, openAiKey);
+            //run local if the RunLocal setting is true, or if the ApiKey is not set
+            bool runLocal = config.GetValue<bool>("OpenAI:RunLocal") || string.IsNullOrWhiteSpace(config["OpenAI:ApiKey"]);
+            string openAiUrl = config["OpenAI:Endpoint"]!;
+            string openAiKey = config["OpenAI:ApiKey"]!;
+            return new OpenAiConfiguration(openAiUrl, openAiKey, runLocal);
         }
     }
 
