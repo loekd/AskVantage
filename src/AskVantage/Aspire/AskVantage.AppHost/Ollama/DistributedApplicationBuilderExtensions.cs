@@ -9,16 +9,13 @@ public static class DistributedApplicationBuilderExtensions
 
     private const string ModelVolumeName = "ollama";
     private const string ModelVolumePath = "/root/.ollama";
+    // private const string ModelFileVolume = "./Ollama/ModelFile";
+    // private const string ModelFilePath = "/root/.ollama/ModelFile";
 
-    private const string ModelFileVolume = "./Ollama/ModelFile";
-    private const string ModelFilePath = "/root/.ollama/ModelFile";
-
-    private const string
-        DefaultModelName =
-            "llama3.2:3b"; //model name should match the name in the model file, in the 'FROM' expression.
+    private const string DefaultModelName = "llama3.2:3b"; //model name should match the name in the model file, in the 'FROM' expression.
 
     /// <summary>
-    ///     Adds an Ollama container to the application model.
+    /// Builder extensions that add an Ollama container to the application model.
     /// </summary>
     public static IResourceBuilder<OllamaResource> AddOllama(this IDistributedApplicationBuilder builder,
         string name = "Ollama", int? port = null, string modelName = DefaultModelName, bool useNvidiaGpu = false)
@@ -42,7 +39,6 @@ public static class DistributedApplicationBuilderExtensions
             resourceBuilder = resourceBuilder
                 .WithEnvironment(opt => { opt.EnvironmentVariables["ENABLE_NVIDIA_DOCKER"] = "true"; })
                 .WithContainerRuntimeArgs("--gpus=all");
-
         return resourceBuilder;
     }
 }

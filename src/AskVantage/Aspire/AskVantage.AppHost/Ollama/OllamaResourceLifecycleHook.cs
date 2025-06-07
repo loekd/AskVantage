@@ -6,15 +6,11 @@ namespace AskVantage.AppHost.Ollama;
 internal class OllamaResourceLifecycleHook(ResourceNotificationService notificationService)
     : IDistributedApplicationLifecycleHook, IAsyncDisposable
 {
-    private readonly CancellationTokenSource tokenSource = new();
-
-    /// <summary>
-    ///     Cleans up (un)managed resources.
-    /// </summary>
-    /// <returns></returns>
+    private readonly CancellationTokenSource _tokenSource = new();
+    
     public ValueTask DisposeAsync()
     {
-        tokenSource.Cancel();
+        _tokenSource.Cancel();
         return default;
     }
 
@@ -28,7 +24,7 @@ internal class OllamaResourceLifecycleHook(ResourceNotificationService notificat
         CancellationToken cancellationToken = default)
     {
         foreach (var resource in appModel.Resources.OfType<OllamaResource>())
-            DownloadModelInBackground(resource, tokenSource.Token);
+            DownloadModelInBackground(resource, _tokenSource.Token);
         return Task.CompletedTask;
     }
 
@@ -42,8 +38,8 @@ internal class OllamaResourceLifecycleHook(ResourceNotificationService notificat
         {
             try
             {
-                string? connectionString = resource.GetEndpoint(OllamaResource.OllamaEndpointName).Url;
-                OllamaApiClient ollamaClient = new(new Uri(connectionString!));
+                string httpEndpoint = resource.GetEndpoint(OllamaResource.OllamaEndpointName).Url;
+                OllamaApiClient ollamaClient = new(new Uri(httpEndpoint));
 
                 bool hasModel = await ModelExists(resource, ollamaClient, model, cancellationToken);
                 if (!hasModel) await PullModel(resource, ollamaClient, model, cancellationToken);
@@ -83,7 +79,7 @@ internal class OllamaResourceLifecycleHook(ResourceNotificationService notificat
                 continue;
 
             double newPercentage = status.Percent;
-            if (newPercentage != oldPercentage)
+            if (Math.Abs(newPercentage - oldPercentage) > 0.1)
             {
                 var message = $"Downloading model '{model}' ({newPercentage:F1}%)";
                 await notificationService.PublishUpdateAsync(resource,

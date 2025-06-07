@@ -1,7 +1,7 @@
 ﻿namespace AskVantage.AppHost.Ollama;
 
 /// <summary>
-///     An Ollama container.
+/// Runs an Ollama container.
 /// </summary>
 /// <param name="name">Name for resource</param>
 /// <param name="modelName">LLM to download on first startup</param>
@@ -14,7 +14,7 @@ public class OllamaResource(string name, string modelName) : ContainerResource(n
     internal string ModelName { get; set; } = modelName;
 
     /// <summary>
-    ///     Returns the endpoint for Ollama
+    /// Returns the HTTP endpoint for Ollama
     /// </summary>
     public EndpointReference Endpoint
     {
