@@ -396,12 +396,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-**/*dapr*
-src/start/AskVantage/Aspire/*
-src/finished/AskVantage/Aspire/AskVantage.AppHost/aspirate-state.json
-src/finished/AskVantage/Aspire/AskVantage.AppHost/manifest.json
-src/finished/AskVantage/Aspire/AskVantage.AppHost/aspirate-output/*
 aspirate-state.json
-src/finished/AskVantage/Aspire/AskVantage.AppHost/azure.yaml
-src/finished/AskVantage/Aspire/AskVantage.AppHost/next-steps.md
-src/finished/AskVantage/Aspire/AskVantage.AppHost/infra/*
