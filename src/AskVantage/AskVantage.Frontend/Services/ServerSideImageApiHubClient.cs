@@ -9,7 +9,7 @@ public class ServerSideImageApiHubClient : IImageApiHubClient
     {
         return ValueTask.CompletedTask;
     }
-
+#pragma warning disable CS0067  
     public event Func<string, ImageOcrResult, Task>? OcrCompleted;
     public event Func<string, Task>? OcrFailed;
     public event Func<string, QuestionGenerationResult, Task>? GenerationCompleted;

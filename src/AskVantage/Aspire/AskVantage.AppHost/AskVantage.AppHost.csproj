@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <Sdk Name="Aspire.AppHost.Sdk" Version="9.0.0"/>
+    <Sdk Name="Aspire.AppHost.Sdk" Version="9.5.1" />
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -8,18 +8,19 @@
         <Nullable>enable</Nullable>
         <IsAspireHost>true</IsAspireHost>
         <UserSecretsId>d1ec512a-6904-4893-af0d-124add6dc442</UserSecretsId>
+        <NoWarn>CS0067;</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.Hosting.AppHost" Version="9.3.0"/>
-        <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="9.5.0"/>
-        <PackageReference Include="OllamaSharp" Version="5.2.2"/>
-        <PackageReference Include="CommunityToolkit.Aspire.Hosting.Redis.Extensions" Version="9.5.0"/>
+        <PackageReference Include="Aspire.Hosting.AppHost" Version="9.5.1" />
+        <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="9.8.0" />
+        <PackageReference Include="OllamaSharp" Version="5.4.8" />
+        <PackageReference Include="CommunityToolkit.Aspire.Hosting.Redis.Extensions" Version="9.8.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Apis\ImageApi\ImageApi.csproj"/>
-        <ProjectReference Include="..\..\AskVantage.Frontend\AskVantage.Frontend.csproj"/>
+        <ProjectReference Include="..\..\Apis\ImageApi\ImageApi.csproj" />
+        <ProjectReference Include="..\..\AskVantage.Frontend\AskVantage.Frontend.csproj" />
     </ItemGroup>
 
 </Project>

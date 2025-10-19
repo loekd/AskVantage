@@ -7,11 +7,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Aspire\AskVantage.ServiceDefaults\AskVantage.ServiceDefaults.csproj"/>
-        <ProjectReference Include="..\AskVantage.Frontend.Client\AskVantage.Frontend.Client.csproj"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.5"/>
-        <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="9.3.0"/>
-        <PackageReference Include="MudBlazor" Version="8.7.0"/>
+        <ProjectReference Include="..\Aspire\AskVantage.ServiceDefaults\AskVantage.ServiceDefaults.csproj" />
+        <ProjectReference Include="..\AskVantage.Frontend.Client\AskVantage.Frontend.Client.csproj" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.10" />
+        <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="9.5.1" />
+        <PackageReference Include="MudBlazor" Version="8.13.0" />
 
     </ItemGroup>
 

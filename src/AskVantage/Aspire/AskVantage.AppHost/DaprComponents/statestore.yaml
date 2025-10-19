@@ -1,0 +1,16 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: imageapistatestorecomponent
+  namespace: default
+  labels:
+    app: imageapistatestorecomponent
+spec:
+  type: state.redis
+  version: v1
+  initTimeout: 30s
+  metadata:
+  - name: redisHost
+    value: localhost:6380
+  - name: redisPassword
+    value: "S3cr3tPassw0rd!"

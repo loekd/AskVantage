@@ -397,3 +397,6 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 aspirate-state.json
+/scripts/*.yaml
+/src/.idea/.idea.AskVantage/.idea/
+/.aspire/settings.json
