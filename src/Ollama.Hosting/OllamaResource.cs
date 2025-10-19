@@ -1,4 +1,7 @@
-﻿namespace AskVantage.AppHost.Ollama;
+﻿using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
+
+namespace Ollama.Hosting;
 
 /// <summary>
 /// Runs an Ollama container.

@@ -1,6 +1,8 @@
-﻿using Aspire.Hosting.Lifecycle;
+﻿using Aspire.Hosting;
+using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Lifecycle;
 
-namespace AskVantage.AppHost.Ollama;
+namespace Ollama.Hosting;
 
 public static class DistributedApplicationBuilderExtensions
 {
@@ -9,8 +11,6 @@ public static class DistributedApplicationBuilderExtensions
 
     private const string ModelVolumeName = "ollama";
     private const string ModelVolumePath = "/root/.ollama";
-    // private const string ModelFileVolume = "./Ollama/ModelFile";
-    // private const string ModelFilePath = "/root/.ollama/ModelFile";
 
     private const string DefaultModelName = "llama3.2:3b"; //model name should match the name in the model file, in the 'FROM' expression.
 
@@ -18,7 +18,7 @@ public static class DistributedApplicationBuilderExtensions
     /// Builder extensions that add an Ollama container to the application model.
     /// </summary>
     public static IResourceBuilder<OllamaResource> AddOllama(this IDistributedApplicationBuilder builder,
-        string name = "Ollama", int? port = null, string modelName = DefaultModelName, bool useNvidiaGpu = false)
+        string name = "Ollama", int? port = null, string modelName = DefaultModelName, bool useNvidiaGpu = false, bool verboseLogging = true)
     {
         builder.Services.TryAddLifecycleHook<OllamaResourceLifecycleHook>();
         var ollama = new OllamaResource(name, modelName);
@@ -28,12 +28,22 @@ public static class DistributedApplicationBuilderExtensions
                 Image = OllamaImageName,
                 Tag = OllamaImageTag
             })
+            
             .WithVolume(ModelVolumeName, ModelVolumePath)
-            //.WithBindMount(ModelFileVolume, ModelFilePath, true)
             .WithHttpEndpoint(port, 11434, OllamaResource.OllamaEndpointName)
             .WithLifetime(ContainerLifetime.Persistent)
             .ExcludeFromManifest()
             .PublishAsContainer();
+        
+        if (verboseLogging)
+        {
+            resourceBuilder = resourceBuilder.WithEnvironment(opt =>
+            {
+                opt.EnvironmentVariables["OLLAMA_DEBUG"] = "1";
+                opt.EnvironmentVariables["OLLAMA_LOG_LEVEL"] = "debug";
+                opt.EnvironmentVariables["OLLAMA_VERBOSE"] = "true";
+            });
+        }
 
         if (useNvidiaGpu)
             resourceBuilder = resourceBuilder

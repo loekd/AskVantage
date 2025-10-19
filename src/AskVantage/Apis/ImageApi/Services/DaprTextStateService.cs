@@ -69,7 +69,7 @@ public class DaprTextStateService(DaprClient daprClient, ILogger<DaprTextStateSe
         var items = new List<BulkDeleteStateItem>(allKeys.Length);
         foreach (var key in allKeys)
         {
-            items.Add(new BulkDeleteStateItem(key, null));
+            items.Add(new BulkDeleteStateItem(key, null!));
         }
         await daprClient.DeleteBulkStateAsync(StateStoreName, items, cancellationToken: cancellationToken);
         await SetAllKeys([], cancellationToken);

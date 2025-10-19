@@ -1,5 +1,5 @@
 using System.Collections.Immutable;
-using AskVantage.AppHost.Ollama;
+using Ollama.Hosting;
 using CommunityToolkit.Aspire.Hosting.Dapr;
 using Microsoft.Extensions.Configuration;
 using Projects;
@@ -38,7 +38,7 @@ internal class Program
         bool runLocalOllama = builder.Configuration.GetValue<bool>("OpenAILocal:RunLocal");
 
         var localQuestionGenerator = runLocalOllama
-                                        ? builder.AddOllama("questiongenerator", modelName: ModelNames.Qwen2_7b, port: 11434, useNvidiaGpu: false)
+                                        ? builder.AddOllama("questiongenerator", modelName: ModelNames.Llama3_2b, port: 11434, useNvidiaGpu: false)
                                         : null;
         var openai = builder.AddConnectionString("openAiConnection");
         var openAiApiKey = builder.AddParameter("OpenAiApiKey", secret: true,
@@ -73,7 +73,7 @@ internal class Program
             .WithEnvironment("OPENAI__RUNLOCAL", runLocalOllama ? "true" : "false")
             .WaitFor(redis);
 
-        var frontend = builder.AddProject<AskVantage_Frontend>("AskVantageFrontend")
+        _ = builder.AddProject<AskVantage_Frontend>("AskVantageFrontend")
             .WithReference(imageApi)
             .WithExternalHttpEndpoints()
             .WaitFor(imageApi);

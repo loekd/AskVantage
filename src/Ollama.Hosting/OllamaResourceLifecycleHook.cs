@@ -1,8 +1,10 @@
-﻿using Aspire.Hosting.Lifecycle;
+﻿using Aspire.Hosting.ApplicationModel;
+using Aspire.Hosting.Lifecycle;
 using OllamaSharp;
 
-namespace AskVantage.AppHost.Ollama;
+namespace Ollama.Hosting;
 
+// ReSharper disable once ClassNeverInstantiated.Global
 internal class OllamaResourceLifecycleHook(ResourceNotificationService notificationService)
     : IDistributedApplicationLifecycleHook, IAsyncDisposable
 {
