@@ -400,3 +400,4 @@ aspirate-state.json
 /scripts/*.yaml
 /src/.idea/.idea.AskVantage/.idea/
 /.aspire/settings.json
+/aspire-output/
