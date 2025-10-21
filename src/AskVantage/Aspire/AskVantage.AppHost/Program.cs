@@ -78,6 +78,8 @@ internal class Program
             .WithExternalHttpEndpoints()
             .WaitFor(imageApi);
 
+        
+        builder.AddDockerComposeEnvironment("compose");
         builder.Build().Run();
     }
 }
