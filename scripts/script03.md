@@ -67,8 +67,8 @@ docker ps | grep redis:8.2
 # output for next slide:
 #kubectl --kubeconfig $KUBECONFIG get executable $IMAGEAPI -o yaml | grep "executionType" -C 1 | bat --language yaml -P
 
-# clean up
-kill $IMAGEAPI_PID
+# clean up DCP by terminating the AppHost, so all children are removed as well.
+kill $APPHOST_PID
 
 # show that the container was removed
 docker ps | grep redis:latest

@@ -1,4 +1,7 @@
 # run Aspire AppHost project
+echo "skip this demo"
+killall dotnet
+# if you really want to:
 echo "Manually start the debugger from Rider"
 
 # Get the dotnet & app host process ids

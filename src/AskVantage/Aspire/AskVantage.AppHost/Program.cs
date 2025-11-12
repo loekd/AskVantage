@@ -38,7 +38,7 @@ internal class Program
         bool runLocalOllama = builder.Configuration.GetValue<bool>("OpenAILocal:RunLocal");
 
         var localQuestionGenerator = runLocalOllama
-                                        ? builder.AddOllama("questiongenerator", modelName: ModelNames.Llama3_2b, port: 11434, useNvidiaGpu: false)
+                                        ? builder.AddOllama("questiongenerator", modelName: ModelNames.Llama3_1b, port: 11434, useNvidiaGpu: false)
                                         : null;
         var openai = builder.AddConnectionString("openAiConnection");
         var openAiApiKey = builder.AddParameter("OpenAiApiKey", secret: true,
@@ -60,7 +60,8 @@ internal class Program
                 opt.WithOptions(new DaprSidecarOptions
                 {
                     AppId = "imageapi",
-                    SchedulerHostAddress = "", // Set to empty string to disable scheduler
+                    SchedulerHostAddress = "", // Disable Dapr scheduler
+                    PlacementHostAddress = "", // Disable Dapr placement
                     ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath)
                 });
                 opt.WithReference(imageApiStateStore);

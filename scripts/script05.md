@@ -1,3 +1,7 @@
+echo "skip this demo"
+killall dotnet
+# if you really want to:
+
 # run Aspire AppHost project
 clear
 pushd . && cd $(git rev-parse --show-toplevel)
