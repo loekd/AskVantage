@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using Microsoft.SemanticKernel;
 
@@ -7,14 +9,18 @@ namespace ImageApi.Services;
 public partial class OpenAIQuestionGeneratorService(IServiceScopeFactory serviceScopeFactory)
     : IQuestionGeneratorService
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public async Task<IEnumerable<QuestionAnswerResponse>> GenerateQuestions(string input,
         CancellationToken cancellationToken)
     {
         var arguments = new KernelArguments
         {
-            { "input_text", input }
+            { "input_text", input },
+            { "enable_usage_tracking", false}
         };
         using var scope = serviceScopeFactory.CreateScope();
         var serviceProvider = scope.ServiceProvider;

@@ -1,0 +1,40 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug AppHost",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/src/AskVantage/Aspire/AskVantage.AppHost/bin/Debug/net10.0/AskVantage.AppHost.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/AskVantage/Aspire/AskVantage.AppHost",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:18888",
+                "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "True",
+                "DOTNET_DASHBOARD_OTLP_ENDPOINT_URL": "http://localhost:18889",
+                "ASPIRE_DASHBOARD_UNSECURED_ALLOW_ANONYMOUS": "true"
+            }
+        },
+        {
+            "name": "Launch AppHost with aspire CLI",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "/usr/local/bin/aspire",
+            "args": [
+                "run",
+                "--project", 
+                "${workspaceFolder}/src/AskVantage/Aspire/AskVantage.AppHost/AskVantage.AppHost.csproj"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        }
+    ]
+}

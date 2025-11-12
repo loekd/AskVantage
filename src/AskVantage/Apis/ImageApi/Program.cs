@@ -1,19 +1,89 @@
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using Azure;
+using Azure.AI.OpenAI;
 using Azure.AI.Vision.ImageAnalysis;
 using Grpc.Net.Client;
 using ImageApi.Hubs;
 using ImageApi.Services;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using Microsoft.SemanticKernel.Prompty;
 
 namespace ImageApi;
 
 public static class Program
 {
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers =
+            {
+                static typeInfo =>
+                {
+                    Console.WriteLine("In callback for {0}", typeInfo.Type.Name);
+                    if (typeInfo.Type.Name == "ChatTokenUsage")
+                    {
+                        Console.WriteLine("Found ChatTokenUsage");
+                        // Remove the problematic Patch property from serialization
+                        var patchProperty = typeInfo.Properties
+                            .FirstOrDefault(p => p.Name == "Patch");
+                        if (patchProperty != null)
+                        {
+                            Console.WriteLine("Removing Patch property");
+                            typeInfo.Properties.Remove(patchProperty);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Patch property not found");
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.AddSingleton(JsonSerializerOptions);
+        builder.Services.Configure<JsonSerializerOptions>(options =>
+        {
+            options.PropertyNameCaseInsensitive = true;
+            options.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+            options.TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
+            {
+                Modifiers =
+                {
+                    static typeInfo =>
+                    {
+                        if (typeInfo.Type.Name != "ChatTokenUsage") 
+                            return;
+                        
+                        Console.WriteLine("Found ChatTokenUsage");
+                        // Remove the problematic Patch property from serialization
+                        var patchProperty = typeInfo.Properties
+                            .FirstOrDefault(p => p.Name == "Patch");
+                        if (patchProperty != null)
+                        {
+                            Console.WriteLine("Removing Patch property");
+                            typeInfo.Properties.Remove(patchProperty);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Patch property not found");
+                        }
+                    }
+                }
+            };
+        });
 
         builder.AddServiceDefaults();
 
@@ -27,11 +97,23 @@ public static class Program
         //Add question generator:
         builder.Services.AddQuestionGenerator(builder.Configuration, builder.Environment);
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                // Configure JSON options to handle .NET 10 serialization issues
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+            });
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
-        builder.Services.AddSignalR();
+        builder.Services.AddSignalR()
+            .AddJsonProtocol(options =>
+            {
+                // Configure SignalR JSON options to handle .NET 10 serialization issues
+                options.PayloadSerializerOptions.PropertyNameCaseInsensitive = true;
+                options.PayloadSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+            });
 
         var app = builder.Build();
 
@@ -115,10 +197,25 @@ internal static class BuilderExtensions
         }
         else
         {
-            services
-                .AddAzureOpenAIChatCompletion(ModelNames.Gpt4oMini, config.ApiEndpoint, config.ApiKey);
+            // Configure Azure OpenAI with standard settings
+            //services.AddAzureOpenAIChatCompletion(ModelNames.Gpt4oMini, config.ApiEndpoint, config.ApiKey);
+            
+            
+            services.AddSingleton<IChatCompletionService>(sp =>
+            {
+                var client = new AzureOpenAIClient(
+                    new Uri(config.ApiEndpoint), 
+                    new AzureKeyCredential(config.ApiKey),
+                    new AzureOpenAIClientOptions { /* custom JSON options */ }
+                );
+                return new AzureOpenAIChatCompletionService(ModelNames.Gpt4oMini, client);
+            });
         }
         var kernelBuilder = services.AddKernel();
+        // kernelBuilder.Services.ConfigureHttpClientDefaults(c => 
+        // {
+        //     c.AddStandardResilienceHandler();
+        // });
         kernelBuilder.Plugins.AddPromptyFunctions(loggerFactory, config.RunLocal);
         services.AddPromptyTemplates();
         services.AddTransient<IQuestionGeneratorService, OpenAIQuestionGeneratorService>();
@@ -136,7 +233,7 @@ internal static class BuilderExtensions
 
     private static IEnumerable<KernelFunction> CreatePromptyFunctions(ILoggerFactory? factory, bool runLocal)
     {
-        string? basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        string basePath = AppContext.BaseDirectory;
         string promptyDirectory = Path.Join(basePath, "Prompts");
         const string searchPattern = "*.prompty";
         const string localTestFilePattern = ".local.";
@@ -162,7 +259,7 @@ internal static class BuilderExtensions
 
     private static IServiceCollection AddPromptyTemplates(this IServiceCollection services)
     {
-        string? basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        string basePath = AppContext.BaseDirectory;
         string promptyDirectory = Path.Join(basePath, "Prompts");
         foreach (string file in Directory.EnumerateFiles(promptyDirectory, "*.prompty"))
         {
