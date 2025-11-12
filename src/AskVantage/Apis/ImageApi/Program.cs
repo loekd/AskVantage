@@ -212,10 +212,13 @@ internal static class BuilderExtensions
             });
         }
         var kernelBuilder = services.AddKernel();
-        // kernelBuilder.Services.ConfigureHttpClientDefaults(c => 
-        // {
-        //     c.AddStandardResilienceHandler();
-        // });
+        kernelBuilder.Services.ConfigureHttpClientDefaults(c => 
+        {
+            c.ConfigureHttpClient(client =>
+            {
+                client.Timeout = TimeSpan.FromMinutes(2);
+            });
+        });
         kernelBuilder.Plugins.AddPromptyFunctions(loggerFactory, config.RunLocal);
         services.AddPromptyTemplates();
         services.AddTransient<IQuestionGeneratorService, OpenAIQuestionGeneratorService>();

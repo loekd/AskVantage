@@ -28,8 +28,8 @@ public static class Extensions
             http.AddStandardResilienceHandler(opt =>
             {
                 opt.RateLimiter.DefaultRateLimiterOptions.PermitLimit = 1;
-                opt.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(180);
-                opt.AttemptTimeout.Timeout = TimeSpan.FromSeconds(60);
+                opt.TotalRequestTimeout.Timeout = TimeSpan.FromSeconds(240);
+                opt.AttemptTimeout.Timeout = TimeSpan.FromSeconds(120);
                 opt.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(360);
             });
 
