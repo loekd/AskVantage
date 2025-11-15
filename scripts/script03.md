@@ -1,3 +1,4 @@
+
 # Getting the details of the Developer Control Plane
 clear
 pushd . && cd $(git rev-parse --show-toplevel)
@@ -48,21 +49,21 @@ $CTRL+C
 kubectl --kubeconfig $KUBECONFIG get executable aspire-dashboard-2
 
 ## call it
-curl -vk "http://localhost:18880/login?t=1b3b7218-9040-4b50-977d-dbbcb647ed3a"
+curl -vk "http://localhost:18880"
 # remove it
 kubectl --kubeconfig $KUBECONFIG delete -f ./scripts/dashboard.yaml
 
-## run a standalone Redis container
+## run a standalone Nginx container
 clear
-cat ./scripts/container.yaml | head -22 | bat --language=yaml -P
+cat ./scripts/container.yaml | head -26 | bat --language=yaml -P
 
-lsof -i :6378
+lsof -i :8080
 
 kubectl --kubeconfig $KUBECONFIG apply -f ./scripts/container.yaml
-kubectl --kubeconfig $KUBECONFIG get container redis
+kubectl --kubeconfig $KUBECONFIG get container nginx
 
-lsof -i :6378
-docker ps | grep redis:8.2
+lsof -i :8080
+docker ps | grep nginx
 
 # output for next slide:
 #kubectl --kubeconfig $KUBECONFIG get executable $IMAGEAPI -o yaml | grep "executionType" -C 1 | bat --language yaml -P
@@ -71,7 +72,7 @@ docker ps | grep redis:8.2
 kill $APPHOST_PID
 
 # show that the container was removed
-docker ps | grep redis:latest
+docker ps | grep nginx
 
 popd && killall dotnet && clear
 

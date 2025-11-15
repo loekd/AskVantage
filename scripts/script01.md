@@ -1,10 +1,10 @@
 pushd . && cd $(git rev-parse --show-toplevel)
 
 ## run Aspire AppHost project
-dotnet run --project src/AskVantage/Aspire/AskVantage.AppHost/AskVantage.AppHost.csproj &
+aspire run --project src/AskVantage/Aspire/AskVantage.AppHost/AskVantage.AppHost.csproj &
 $RETURN
 
-ps | grep -v grep | grep 'dotnet run --project'
+ps | grep -v grep | grep 'dotnet run.*AskVantage\.AppHost'
 DOTNET_PID=$(ps | grep 'dotnet run.*AskVantage\.AppHost\.csproj' | awk '{print $1}')
 pstree -p $DOTNET_PID | grep project
 #echo "dotnet processid: $DOTNET_PID"

@@ -1,8 +1,9 @@
 using System.Collections.Immutable;
-using Ollama.Hosting;
 using CommunityToolkit.Aspire.Hosting.Dapr;
 using Microsoft.Extensions.Configuration;
+using Ollama.Hosting;
 using Projects;
+
 namespace AskVantage.AppHost;
 
 internal class Program
@@ -22,14 +23,14 @@ internal class Program
 
         //A containerized pub/sub message broker & state store:
         var redisPassword =
-            builder.AddParameter("Redis-Password", secret: true, valueGetter: () => "S3cr3tPassw0rd!");
+            builder.AddParameter("Redis-Password", secret: true);
         var redis = builder
             .AddRedis("redis", password: redisPassword)
             .WithHostPort(6380)     
             .WithLifetime(ContainerLifetime.Persistent)
             .WithRedisInsight();
 
-        string daprComponentsPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)!, "..", "..", "..", "DaprComponents"));
+        string daprComponentsPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "DaprComponents"));
         var imageApiStateStore = builder.AddDaprStateStore("imageapistatestorecomponent", new DaprComponentOptions
         {
             LocalPath = $"{daprComponentsPath}/statestore.yaml"
@@ -54,7 +55,6 @@ internal class Program
 
         var imageApi = builder.AddProject<ImageApi>("imageapi")
             .WithOptionalReference(localQuestionGenerator?.Resource.Endpoint)
-            //.WithReference(imageApiStateStore)
             .WithDaprSidecar(opt =>
             {
                 opt.WithOptions(new DaprSidecarOptions
@@ -65,14 +65,14 @@ internal class Program
                     ResourcesPaths = ImmutableHashSet.Create(daprComponentsPath)
                 });
                 opt.WithReference(imageApiStateStore);
+                opt.WaitFor(redis);
             })
             .WithReference(openai)
             .WithEnvironment("COMPUTERVISION__ENDPOINT", ocrEndpoint)
             .WithEnvironment("COMPUTERVISION__APIKEY", ocrApiKey)
             .WithEnvironment("OPENAI__ENDPOINT", openAiEndpoint)
             .WithEnvironment("OPENAI__APIKEY", openAiApiKey)
-            .WithEnvironment("OPENAI__RUNLOCAL", runLocalOllama ? "true" : "false")
-            .WaitFor(redis);
+            .WithEnvironment("OPENAI__RUNLOCAL", runLocalOllama ? "true" : "false");
 
         _ = builder.AddProject<AskVantage_Frontend>("AskVantageFrontend")
             .WithReference(imageApi)

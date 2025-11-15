@@ -20,7 +20,9 @@ public static class DistributedApplicationBuilderExtensions
     public static IResourceBuilder<OllamaResource> AddOllama(this IDistributedApplicationBuilder builder,
         string name = "Ollama", int? port = null, string modelName = DefaultModelName, bool useNvidiaGpu = false, bool verboseLogging = true)
     {
-        builder.Services.TryAddLifecycleHook<OllamaResourceLifecycleHook>();
+        //builder.Services.TryAddLifecycleHook<OllamaResourceLifecycleHook>();
+        builder.Services.TryAddEventingSubscriber<OllamaResourceEventSubscriber>();
+
         var ollama = new OllamaResource(name, modelName);
         IResourceBuilder<OllamaResource> resourceBuilder = builder.AddResource(ollama)
             .WithAnnotation(new ContainerImageAnnotation

@@ -44,9 +44,6 @@ public class Program
             app.UseHsts();
         }
 
-        //app.UseHttpsRedirection();
-
-        //app.UseStaticFiles();
         app.MapStaticAssets();
         app.UseAntiforgery();
 
