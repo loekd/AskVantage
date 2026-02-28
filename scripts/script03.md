@@ -65,6 +65,9 @@ kubectl --kubeconfig $KUBECONFIG get container nginx
 lsof -i :8080
 docker ps | grep nginx
 
+#show in browser
+open http://localhost:8080
+
 # output for next slide:
 #kubectl --kubeconfig $KUBECONFIG get executable $IMAGEAPI -o yaml | grep "executionType" -C 1 | bat --language yaml -P
 

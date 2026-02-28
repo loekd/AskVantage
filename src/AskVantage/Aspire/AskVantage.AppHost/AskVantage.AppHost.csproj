@@ -1,5 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
-    <Sdk Name="Aspire.AppHost.Sdk" Version="13.0.0" />
+<Project Sdk="Aspire.AppHost.Sdk/13.0.0">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -12,7 +11,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.Hosting.AppHost" Version="13.0.0" />
         <PackageReference Include="Aspire.Hosting.Docker" Version="13.0.0-preview.1.25560.3" />
         <PackageReference Include="CommunityToolkit.Aspire.Hosting.Dapr" Version="9.9.0" />        
         <PackageReference Include="CommunityToolkit.Aspire.Hosting.Redis.Extensions" Version="9.9.0" />

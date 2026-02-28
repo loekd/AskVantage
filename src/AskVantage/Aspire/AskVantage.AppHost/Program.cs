@@ -3,6 +3,7 @@ using CommunityToolkit.Aspire.Hosting.Dapr;
 using Microsoft.Extensions.Configuration;
 using Ollama.Hosting;
 using Projects;
+using Aspire.Hosting.Pipelines;
 
 namespace AskVantage.AppHost;
 
@@ -79,8 +80,21 @@ internal class Program
             .WithExternalHttpEndpoints()
             .WaitFor(imageApi);
 
-        
-        builder.AddDockerComposeEnvironment("compose");
+        #pragma warning disable ASPIREPIPELINES001
+        builder.AddDockerComposeEnvironment("compose")
+        .WithPipelineStepFactory(context =>
+        {
+            return new PipelineStep
+            {
+                Name = "CustomDeployStep",
+                Action = (ctx) =>
+                {
+                    Console.WriteLine("Executing custom deploy step...");
+                    return Task.CompletedTask;
+                },
+                RequiredBySteps = [WellKnownPipelineSteps.Publish]
+            };
+        });
         builder.Build().Run();
     }
 }
