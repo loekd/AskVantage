@@ -23,15 +23,23 @@ internal class Program
         });
 
         //A containerized pub/sub message broker & state store:
-        var redisPassword =
-            builder.AddParameter("Redis-Password", secret: true);
+        var redisPassword = builder.AddParameter("redis-password", secret: false);
+#pragma warning disable ASPIRECERTIFICATES001
         var redis = builder
             .AddRedis("redis", password: redisPassword)
-            .WithHostPort(6380)     
+            .WithHostPort(6380)
             .WithLifetime(ContainerLifetime.Persistent)
-            .WithRedisInsight();
+            .WithEndpointProxySupport(false)
+            .WithoutHttpsCertificate()
+            .WithRedisInsight(opt => opt.WithoutHttpsCertificate())
+            .WithImageTag("7.4-alpine")
+            .WithEnvironment("REDIS_PASSWORD", redisPassword);
+#pragma warning restore ASPIRECERTIFICATES001
 
-        string daprComponentsPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "DaprComponents"));
+        //string daprComponentsPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "DaprComponents"));
+        string daprComponentsPath = Path.GetFullPath(Path.Combine(builder.AppHostDirectory, "DaprComponents"));
+        if (!Directory.Exists(daprComponentsPath)) throw new InvalidOperationException("DaprComponents directory not found: " + daprComponentsPath);
+        
         var imageApiStateStore = builder.AddDaprStateStore("imageapistatestorecomponent", new DaprComponentOptions
         {
             LocalPath = $"{daprComponentsPath}/statestore.yaml"
